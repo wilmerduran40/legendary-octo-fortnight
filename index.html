@@ -288,23 +288,33 @@
         });
 
         function handleEscape(e) {
-            e.preventDefault();
-            showVideo();
+            if (started) {
+                e.preventDefault();
+                showVideo();
+            }
         }
 
         document.addEventListener('keydown', handleEscape);
         window.onbeforeunload = function() {
-            showVideo();
-            return '';
+            if (started) {
+                showVideo();
+                return '';
+            }
         };
         
         window.onerror = function() {
-            showVideo();
+            if (started) {
+                showVideo();
+            }
             return true;
         };
 
-        window.addEventListener('unload', showVideo);
-        window.addEventListener('pagehide', showVideo);
+        window.addEventListener('unload', function() {
+            if (started) showVideo();
+        });
+        window.addEventListener('pagehide', function() {
+            if (started) showVideo();
+        });
     </script>
 </body>
 </html>
