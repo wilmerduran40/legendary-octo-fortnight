@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Sorpresa!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fff200, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 400% 400%;
+            animation: rainbow 2s linear infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .container {
+            text-align: center;
+            color: white;
+            text-shadow: 3px 3px 6px black;
+        }
+        h1 { font-size: 4rem; margin-bottom: 20px; animation: shake 0.5s infinite; }
+        p { font-size: 1.5rem; }
+        @keyframes shake {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-5px, 5px); }
+            50% { transform: translate(5px, -5px); }
+            75% { transform: translate(-5px, -5px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 ¡MÚSICA INFINITA! 🎵</h1>
+        <p>¡No puedes parar la música! 🔊</p>
+        <p style="margin-top: 20px; font-size: 1rem;">Toca en cualquier lugar para intentar parar...</p>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let oscillator = null;
+        let gainNode = null;
+        let isPlaying = false;
+        let lockInterval = null;
+
+        function playSound() {
+            if (isPlaying) return;
+            isPlaying = true;
+            
+            oscillator = audioContext.createOscillator();
+            gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.5);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.5);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            
+            setInterval(() => {
+                if (oscillator) {
+                    oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                    oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.5);
+                }
+            }, 500);
+        }
+
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+        }
+
+        function startLock() {
+            enterFullscreen();
+            
+            lockInterval = setInterval(() => {
+                if (!document.fullscreenElement) {
+                    enterFullscreen();
+                }
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(lockInterval);
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            }, 120000);
+        }
+
+        document.body.addEventListener('click', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    playSound();
+                    startLock();
+                });
+            } else {
+                playSound();
+                startLock();
+            }
+        });
+
+        document.body.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    playSound();
+                    startLock();
+                });
+            } else {
+                playSound();
+                startLock();
+            }
+        }, { passive: false });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
