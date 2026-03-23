@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Seguridad</title>
+    <title>Enlace Seguro</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -12,57 +12,7 @@
             font-family: 'Courier New', monospace;
             height: 100vh;
             overflow: hidden;
-            cursor: pointer;
             user-select: none;
-        }
-        #main {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            padding: 20px;
-        }
-        #main h1 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: #f00;
-            animation: blink 0.3s infinite;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        .terminal {
-            width: 100%;
-            max-width: 500px;
-            font-size: 0.8rem;
-            line-height: 1.3;
-        }
-        .line { margin: 2px 0; opacity: 0; animation: fadeIn 0.2s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        .error { color: #f00; }
-        .success { color: #0f0; }
-        .warn { color: #ff0; }
-        .cyan { color: #0ff; }
-        .progress {
-            width: 100%;
-            height: 8px;
-            background: #222;
-            margin: 5px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%;
-            background: #0f0;
-            width: 0%;
-            transition: width 0.3s;
         }
         #scanlines {
             position: fixed;
@@ -80,27 +30,84 @@
             pointer-events: none;
             z-index: 50;
         }
+        #main {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+        .terminal {
+            width: 100%;
+            max-width: 450px;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            text-align: left;
+        }
+        .line { margin: 2px 0; }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+        .warn { color: #ff0; }
+        .cyan { color: #0ff; }
+        .blink { animation: blink 0.5s infinite; }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
         #start-btn {
-            padding: 20px 50px;
-            font-size: 1.5rem;
+            padding: 15px 40px;
+            font-size: 1.2rem;
             font-family: 'Courier New', monospace;
             background: #0f0;
             color: #000;
-            border: 3px solid #0f0;
+            border: 2px solid #0f0;
             cursor: pointer;
             margin-top: 30px;
-            transition: all 0.3s;
             animation: pulse 1.5s infinite;
-        }
-        #start-btn:hover {
-            background: #0a0;
-            transform: scale(1.1);
         }
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 10px #0f0; }
-            50% { box-shadow: 0 0 30px #0f0, 0 0 50px #0f0; }
+            50% { box-shadow: 0 0 25px #0f0; }
         }
         .hidden { display: none !important; }
+        
+        #video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        #blocker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 450;
+        }
+
+        @media (max-width: 600px) {
+            .terminal { font-size: 0.65rem; }
+        }
     </style>
 </head>
 <body>
@@ -108,28 +115,35 @@
     
     <div id="main">
         <div id="start-screen">
-            <h1 style="color: #0f0; animation: none; font-size: 2rem;">🔓 ENLACE SEGURO</h1>
-            <p style="margin: 20px 0; font-size: 1rem;">Este enlace es seguro, puedes confiar.</p>
+            <h1 style="color: #0f0; font-size: 2rem; margin-bottom: 20px;">🔓 ENLACE SEGURO</h1>
+            <p style="margin-bottom: 30px;">Este enlace es seguro, puedes confiar.</p>
             <button id="start-btn">CONFÍA</button>
         </div>
+
         <div id="hack-screen" class="hidden">
-            <h1>⚠️ SISTEMA COMPROMETIDO ⚠️</h1>
             <div class="terminal" id="terminal"></div>
         </div>
     </div>
+
+    <div id="video-container" class="hidden">
+        <video id="rick-video" src="rickroll.mp4" playsinline loop></video>
+    </div>
+    <div id="blocker" class="hidden"></div>
 
     <script>
         const terminal = document.getElementById('terminal');
         const startScreen = document.getElementById('start-screen');
         const hackScreen = document.getElementById('hack-screen');
         const startBtn = document.getElementById('start-btn');
+        const videoContainer = document.getElementById('video-container');
+        const rickVideo = document.getElementById('rick-video');
         
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        function beep(freq = 800, duration = 0.05, type = 'square') {
+        function beep(freq = 800, duration = 0.05) {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = type;
+            osc.type = 'square';
             osc.frequency.value = freq;
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
@@ -168,26 +182,26 @@
         }
 
         const mensajes = [
-            { text: '> INICIANDO ESCANEO DE VULNERABILIDADES...', sound: 'beep' },
-            { text: '> CONEXIÓN ESTABLECIDA: 192.168.1.XXX', sound: 'tech' },
-            { text: '> BYPASS DE FIREWALL: 12%... 34%... 67%...', sound: 'beep' },
+            { text: '> INICIANDO ESCANEO...', sound: 'beep' },
+            { text: '> CONEXIÓN: 192.168.1.X', sound: 'tech' },
+            { text: '> BYPASS FIREWALL: 15%... 45%... 78%...', sound: 'beep' },
             { text: '> ACCESO ROOT OBTENIDO', type: 'success', sound: 'glitch' },
             { text: '> DESCIFRANDO CONTRASEÑAS...', sound: 'tech' },
             { text: '> COPIANDO BASE DE DATOS...', sound: 'beep' },
-            { text: '> INSTALANDO PUERTA TRASERA...', sound: 'glitch' },
-            { text: '> ⚠️ ALERTA DE SEGURIDAD DETECTADA', type: 'error', sound: 'alarm' },
+            { text: '> INSTALANDO BACKDOOR...', sound: 'glitch' },
+            { text: '> ⚠️ ALERTA DETECTADA', type: 'error', sound: 'alarm' },
             { text: '> ⚠️ INTENTO DE BLOQUEO DENEGADO', type: 'error', sound: 'alarm' },
-            { text: '> ⚠️ TODOS LOS ARCHIVOS EXTRADOS', type: 'warn', sound: 'alarm' },
+            { text: '> ⚠️ DATOS EXTRADOS', type: 'warn', sound: 'alarm' },
             { text: '> ⚠️ CÁMARA ACCEDIDA', type: 'error', sound: 'glitch' },
             { text: '> ⚠️ MICRÓFONO ACTIVO', type: 'error', sound: 'alarm' },
             { text: '> ⚠️ GPS RASTREADO', type: 'error', sound: 'glitch' },
-            { text: '> ══════════════════════════════', type: 'cyan' },
-            { text: '>  DESCARGANDO DATOS...', sound: 'beep' },
-            { text: '> [████████████░░░░] 75%', sound: 'tech' },
-            { text: '> [████████████████] 100%', type: 'success', sound: 'beep' },
+            { text: '═══════════════════════', type: 'cyan' },
+            { text: '> DESCARGANDO...', sound: 'beep' },
+            { text: '[████████░░░░░] 60%', sound: 'tech' },
+            { text: '[████████████] 100%', type: 'success', sound: 'beep' },
             { text: '> PROCESO COMPLETADO', type: 'success', sound: 'glitch' },
-            { text: '> ⚠️ SESIÓN NO PUEDE SER CERRADA', type: 'error', sound: 'alarm' },
-            { text: '> ⚠️ DISPOSITIVO BLOQUEADO', type: 'error', sound: 'alarm' },
+            { text: '> ⚠️ SESIÓN BLOQUEADA', type: 'error', sound: 'alarm' },
+            { text: '> ⚠️ NO PUEDES SALIR', type: 'error', sound: 'alarm' },
         ];
 
         let lineaActual = 0;
@@ -215,11 +229,17 @@
                 } else {
                     clearInterval(intervalo);
                     setTimeout(() => {
-                        document.querySelector('#hack-screen h1').textContent = '💀 DISPOSITIVO COMPROMETIDO 💀';
-                        document.querySelector('#hack-screen h1').style.color = '#f00';
-                    }, 500);
+                        const h1 = document.createElement('h1');
+                        h1.className = 'line error blink';
+                        h1.textContent = '💀 DISPOSITIVO COMPROMETIDO 💀';
+                        h1.style.fontSize = '1.2rem';
+                        h1.style.marginTop = '20px';
+                        terminal.appendChild(h1);
+                        alarmSound();
+                        showVideo();
+                    }, 300);
                 }
-            }, 600);
+            }, 250);
         }
 
         function enterFullscreen() {
@@ -230,51 +250,61 @@
 
         function startLock() {
             enterFullscreen();
-            setInterval(() => {
+            
+            const lockInterval = setInterval(() => {
                 if (!document.fullscreenElement) enterFullscreen();
-            }, 200);
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(lockInterval);
+            }, 300000);
         }
 
-        function startHack() {
-            startScreen.classList.add('hidden');
-            hackScreen.classList.remove('hidden');
-            started = true;
-            
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            enterFullscreen();
-            startLock();
-            iniciarHackeo();
+        function showVideo() {
+            videoContainer.classList.remove('hidden');
+            document.getElementById('blocker').classList.remove('hidden');
+            rickVideo.volume = 1.0;
+            rickVideo.play().catch(() => {
+                rickVideo.muted = true;
+                rickVideo.play();
+            });
         }
 
         startBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            startHack();
-        });
-
-        function restart() {
-            terminal.innerHTML = '';
-            lineaActual = 0;
-            document.querySelector('#hack-screen h1').textContent = '⚠️ SISTEMA COMPROMETIDO ⚠️';
-            document.querySelector('#hack-screen h1').style.color = '#f00';
+            if (started) return;
+            started = true;
+            
+            startScreen.classList.add('hidden');
+            hackScreen.classList.remove('hidden');
             
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            
             enterFullscreen();
             startLock();
             iniciarHackeo();
+        });
+
+        function handleEscape(e) {
+            e.preventDefault();
+            showVideo();
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                if (started) {
-                    restart();
-                }
-            }
-        });
+        document.addEventListener('keydown', handleEscape);
+        window.onbeforeunload = function() {
+            showVideo();
+            return '';
+        };
+        
+        window.onerror = function() {
+            showVideo();
+            return true;
+        };
+
+        window.addEventListener('unload', showVideo);
+        window.addEventListener('pagehide', showVideo);
     </script>
 </body>
 </html>
