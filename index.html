@@ -3,133 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Sorpresa!</title>
+    <title>Sistema de Seguridad</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: linear-gradient(45deg, #ff0000, #ff7300, #fff200, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
-            background-size: 400% 400%;
-            animation: rainbow 2s linear infinite;
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
             overflow: hidden;
             cursor: pointer;
+            user-select: none;
         }
-        @keyframes rainbow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        #main {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
         }
-        .container {
-            text-align: center;
-            color: white;
-            text-shadow: 3px 3px 6px black;
+        #main h1 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #f00;
+            animation: blink 0.3s infinite;
         }
-        h1 { font-size: 4rem; margin-bottom: 20px; animation: shake 0.5s infinite; }
-        p { font-size: 1.5rem; }
-        @keyframes shake {
-            0%, 100% { transform: translate(0); }
-            25% { transform: translate(-5px, 5px); }
-            50% { transform: translate(5px, -5px); }
-            75% { transform: translate(-5px, -5px); }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .terminal {
+            width: 100%;
+            max-width: 500px;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        .line { margin: 2px 0; opacity: 0; animation: fadeIn 0.2s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+        .warn { color: #ff0; }
+        .cyan { color: #0ff; }
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: #222;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #0f0;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        #scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1) 0px,
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 50;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 ¡MÚSICA INFINITA! 🎵</h1>
-        <p>¡No puedes parar la música! 🔊</p>
-        <p style="margin-top: 20px; font-size: 1rem;">Toca en cualquier lugar para intentar parar...</p>
+    <div id="scanlines"></div>
+    
+    <div id="main">
+        <h1>⚠️ SISTEMA COMPROMETIDO ⚠️</h1>
+        <div class="terminal" id="terminal"></div>
     </div>
 
     <script>
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        let oscillator = null;
-        let gainNode = null;
-        let isPlaying = false;
-        let lockInterval = null;
+        const terminal = document.getElementById('terminal');
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function beep(freq = 800, duration = 0.05, type = 'square') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
 
-        function playSound() {
-            if (isPlaying) return;
-            isPlaying = true;
+        function techSound() {
+            beep(1200, 0.02);
+            setTimeout(() => beep(800, 0.03), 50);
+            setTimeout(() => beep(1500, 0.02), 100);
+        }
+
+        function glitchSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            for (let i = 0; i < 10; i++) {
+                osc.frequency.linearRampToValueAtTime(100 + Math.random() * 500, audioCtx.currentTime + 0.01);
+            }
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function alarmSound() {
+            beep(600, 0.1);
+            setTimeout(() => beep(800, 0.1), 100);
+            setTimeout(() => beep(600, 0.1), 200);
+        }
+
+        const mensajes = [
+            { text: '> INICIANDO ESCANEO DE VULNERABILIDADES...', sound: 'beep' },
+            { text: '> CONEXIÓN ESTABLECIDA: 192.168.1.XXX', sound: 'tech' },
+            { text: '> BYPASS DE FIREWALL: 12%... 34%... 67%...', sound: 'beep' },
+            { text: '> ACCESO ROOT OBTENIDO', type: 'success', sound: 'glitch' },
+            { text: '> DESCIFRANDO CONTRASEÑAS...', sound: 'tech' },
+            { text: '> COPIANDO BASE DE DATOS...', sound: 'beep' },
+            { text: '> INSTALANDO PUERTA TRASERA...', sound: 'glitch' },
+            { text: '> ⚠️ ALERTA DE SEGURIDAD DETECTADA', type: 'error', sound: 'alarm' },
+            { text: '> ⚠️ INTENTO DE BLOQUEO DENEGADO', type: 'error', sound: 'alarm' },
+            { text: '> ⚠️ TODOS LOS ARCHIVOS EXTRADOS', type: 'warn', sound: 'alarm' },
+            { text: '> ⚠️ CÁMARA ACCEDIDA', type: 'error', sound: 'glitch' },
+            { text: '> ⚠️ MICRÓFONO ACTIVO', type: 'error', sound: 'alarm' },
+            { text: '> ⚠️ GPS RASTREADO', type: 'error', sound: 'glitch' },
+            { text: '> ══════════════════════════════', type: 'cyan' },
+            { text: '>  DESCARGANDO DATOS...', sound: 'beep' },
+            { text: '> [████████████░░░░] 75%', sound: 'tech' },
+            { text: '> [████████████████] 100%', type: 'success', sound: 'beep' },
+            { text: '> PROCESO COMPLETADO', type: 'success', sound: 'glitch' },
+            { text: '> ⚠️ SESIÓN NO PUEDE SER CERRADA', type: 'error', sound: 'alarm' },
+            { text: '> ⚠️ DISPOSITIVO BLOQUEADO', type: 'error', sound: 'alarm' },
+        ];
+
+        let lineaActual = 0;
+        let audioStarted = false;
+
+        function escribirLinea(msg) {
+            const div = document.createElement('div');
+            div.className = 'line ' + (msg.type || '');
+            div.textContent = msg.text;
+            terminal.appendChild(div);
             
-            oscillator = audioContext.createOscillator();
-            gainNode = audioContext.createGain();
+            if (msg.sound === 'beep') beep();
+            else if (msg.sound === 'tech') techSound();
+            else if (msg.sound === 'glitch') glitchSound();
+            else if (msg.sound === 'alarm') alarmSound();
             
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
-            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.5);
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.5);
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            oscillator.start();
-            
-            setInterval(() => {
-                if (oscillator) {
-                    oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
-                    oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.5);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function iniciarHackeo() {
+            const intervalo = setInterval(() => {
+                if (lineaActual < mensajes.length) {
+                    escribirLinea(mensajes[lineaActual]);
+                    lineaActual++;
+                } else {
+                    clearInterval(intervalo);
+                    setTimeout(() => {
+                        document.querySelector('h1').textContent = '💀 DISPOSITIVO COMPROMETIDO 💀';
+                        document.querySelector('h1').style.color = '#f00';
+                    }, 500);
                 }
-            }, 500);
+            }, 600);
         }
 
         function enterFullscreen() {
             const elem = document.documentElement;
             if (elem.requestFullscreen) elem.requestFullscreen();
             else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
         }
 
         function startLock() {
             enterFullscreen();
-            
-            lockInterval = setInterval(() => {
-                if (!document.fullscreenElement) {
-                    enterFullscreen();
-                }
-            }, 100);
-
-            setTimeout(() => {
-                clearInterval(lockInterval);
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-            }, 120000);
+            setInterval(() => {
+                if (!document.fullscreenElement) enterFullscreen();
+            }, 200);
         }
 
         document.body.addEventListener('click', () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    playSound();
-                    startLock();
-                });
-            } else {
-                playSound();
+            if (!started) {
+                started = true;
+                audioStarted = true;
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                enterFullscreen();
                 startLock();
+                iniciarHackeo();
             }
         });
 
         document.body.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    playSound();
-                    startLock();
-                });
-            } else {
-                playSound();
+            if (!started) {
+                started = true;
+                audioStarted = true;
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                enterFullscreen();
                 startLock();
+                iniciarHackeo();
             }
         }, { passive: false });
 
+        let started = false;
+
+        function restart() {
+            terminal.innerHTML = '';
+            lineaActual = 0;
+            started = false;
+            document.querySelector('h1').textContent = '⚠️ SISTEMA COMPROMETIDO ⚠️';
+            document.querySelector('h1').style.color = '#f00';
+            iniciarHackeo();
+        }
+
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && started) {
                 e.preventDefault();
+                restart();
             }
         });
     </script>
